@@ -42,6 +42,13 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           Month and year are taken from the statement period
  *           (e.g. "DEL 1 AL 31 DE MAYO DE 2021").
  *
+ *           Repurchase agreement rows (Compra en Reporto, Vencimiento de Reporto) are used by GBM
+ *           to invest idle cash overnight. They are imported as buy and sell transactions.
+ *           All reporto rows of the same issuer (e.g. "BI" = CETES, "LD" = BONDES D) are mapped
+ *           to a single security using the EMISORA as name and ticker symbol. The series
+ *           (maturity date, e.g. "211104") changes with every roll-over and is therefore
+ *           not part of the security, but kept in the note.
+ *
  *           Tax withholding rows (RETENCION ISR POR RESULTADO FISCAL, ISR 10 % POR DIVIDENDOS SIC)
  *           are collected upfront and merged into the matching dividend transaction.
  *
@@ -105,6 +112,58 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                             t.setCurrencyCode(asCurrencyCode(MXN));
                             t.setAmount(asAmount(v.get("amount")));
                             t.setNote("Folio: " + v.get("note"));
+                        })
+
+                        .wrap(BuySellEntryItem::new);
+
+        var reportoTransaction = new Transaction<BuySellEntry>();
+
+        var reportoBlock = new Block("^[\\d]{2}\\/[\\d]{2} [\\d]+ (Compra en Reporto|Vencimiento de Reporto) .*$");
+        type.addBlock(reportoBlock);
+        reportoBlock.set(reportoTransaction);
+
+        reportoTransaction //
+
+                        .subject(() -> new BuySellEntry(PortfolioTransaction.Type.BUY))
+
+                        // @formatter:off
+                        // 04/04 90565309 Compra en Reporto LD 260806 1 99.412030 1.00 1 0.00 0.00 0.00 99.41 61.25
+                        // 05/05 90565310 Vencimiento de Reporto LD 260806 1 99.414800 1.00 1 0.00 0.00 0.00 99.41 160.66
+                        // 11/11 93153110 Vencimiento de Reporto BI 211104 16 9.964150 1.00 3 0.00 0.01 0.01 159.41 160.66
+                        // @formatter:on
+                        .section("date", "note", "type", "name", "serie", "shares", "tax", "amount") //
+                        .documentContext("month", "year") //
+                        .match("^[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                                        + "(?<type>Compra en Reporto|Vencimiento de Reporto) " //
+                                        + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
+                                        + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
+                                        + "(?<tax>[\\.,\\d]+) (?<amount>[\\.,\\d]+) [\\.,\\d]+$") //
+                        .assign((t, v) -> {
+                            // @formatter:off
+                            // Is type --> "Vencimiento de Reporto" change from BUY to SELL
+                            // @formatter:on
+                            if ("Vencimiento de Reporto".equals(v.get("type")))
+                                t.setType(PortfolioTransaction.Type.SELL);
+
+                            // @formatter:off
+                            // The series (maturity date) changes with every roll-over.
+                            // Map all reporto rows of the same issuer to a single security
+                            // and keep the series in the note.
+                            // @formatter:on
+                            v.put("currency", asCurrencyCode(MXN));
+                            v.put("tickerSymbol", trim(v.get("name")));
+                            v.put("name", trim(v.get("name")));
+                            t.setSecurity(getOrCreateSecurity(v));
+
+                            t.setDate(asDate(v.get("date") + " " + v.get("month") + " " + v.get("year"), AdditionalLocales.MEXICO));
+                            t.setShares(asShares(v.get("shares")));
+                            t.setCurrencyCode(asCurrencyCode(MXN));
+                            t.setAmount(asAmount(v.get("amount")));
+                            t.setNote("Folio: " + v.get("note") + " | " + v.get("name") + " " + trim(v.get("serie")));
+
+                            var tax = Money.of(asCurrencyCode(MXN), asAmount(v.get("tax")));
+                            if (tax.isPositive())
+                                checkAndSetTax(tax, t.getPortfolioTransaction(), type.getCurrentContext());
                         })
 
                         .wrap(BuySellEntryItem::new);
