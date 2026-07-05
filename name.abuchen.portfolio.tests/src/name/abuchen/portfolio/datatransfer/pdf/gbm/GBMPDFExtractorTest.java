@@ -1072,4 +1072,418 @@ public class GBMPDFExtractorTest
                         hasAmount("MXN", 1056.36), hasGrossValue("MXN", 1056.36), //
                         hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
     }
+
+    @Test
+    public void testEstadoDeCuenta07()
+    {
+        var extractor = new GBMPDFExtractor(new Client());
+
+        List<Exception> errors = new ArrayList<>();
+
+        var results = extractor.extract(PDFInputFile.loadTestCase(getClass(), "EstadoDeCuenta07.txt"), errors);
+
+        assertThat(errors, empty());
+        assertThat(countSecurities(results), is(4L));
+        assertThat(countBuySell(results), is(44L));
+        assertThat(countAccountTransactions(results), is(2L));
+        assertThat(countAccountTransfers(results), is(0L));
+        assertThat(countItemsWithFailureMessage(results), is(0L));
+        assertThat(countSkippedItems(results), is(0L));
+        assertThat(results.size(), is(50));
+        new AssertImportActions().check(results, "MXN");
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("BI"), //
+                        hasName("BI"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("LF"), //
+                        hasName("LF"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("VWO"), //
+                        hasName("VWO"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("VEA"), //
+                        hasName("VEA"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-01T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 271651468 | BI 220804"), //
+                        hasAmount("MXN", 1193.31), hasGrossValue("MXN", 1193.31), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-01T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 273456781 | BI 220804"), //
+                        hasAmount("MXN", 1193.49), hasGrossValue("MXN", 1193.49), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-02T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 273456782 | BI 220804"), //
+                        hasAmount("MXN", 1193.49), hasGrossValue("MXN", 1193.49), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-02T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 274502835 | BI 220804"), //
+                        hasAmount("MXN", 1193.66), hasGrossValue("MXN", 1193.66), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-03T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 274502836 | BI 220804"), //
+                        hasAmount("MXN", 1193.67), hasGrossValue("MXN", 1193.67), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-03T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 275914502 | BI 220804"), //
+                        hasAmount("MXN", 1193.84), hasGrossValue("MXN", 1193.84), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-06T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 275914503 | BI 220804"), //
+                        hasAmount("MXN", 1193.84), hasGrossValue("MXN", 1193.85), //
+                        hasTaxes("MXN", 0.01), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-06T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 277413820 | BI 220804"), //
+                        hasAmount("MXN", 1195.11), hasGrossValue("MXN", 1195.11), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-07T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 277413821 | BI 220804"), //
+                        hasAmount("MXN", 1195.11), hasGrossValue("MXN", 1195.11), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-07T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 278550398 | BI 220804"), //
+                        hasAmount("MXN", 1195.25), hasGrossValue("MXN", 1195.25), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-08T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 278550399 | BI 220804"), //
+                        hasAmount("MXN", 1195.25), hasGrossValue("MXN", 1195.25), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-08T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 280146915 | BI 220804"), //
+                        hasAmount("MXN", 1195.39), hasGrossValue("MXN", 1195.39), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-09T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 280146916 | BI 220804"), //
+                        hasAmount("MXN", 1195.39), hasGrossValue("MXN", 1195.39), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-09T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 281554973 | BI 220804"), //
+                        hasAmount("MXN", 1195.53), hasGrossValue("MXN", 1195.53), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-10T00:00"), hasShares(121.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 281554974 | BI 220804"), //
+                        hasAmount("MXN", 1195.53), hasGrossValue("MXN", 1195.53), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-10T00:00"), hasShares(11.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 282867661 | LF 240321"), //
+                        hasAmount("MXN", 1101.70), hasGrossValue("MXN", 1101.70), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-13T00:00"), hasShares(11.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 282867662 | LF 240321"), //
+                        hasAmount("MXN", 1101.70), hasGrossValue("MXN", 1101.71), //
+                        hasTaxes("MXN", 0.01), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-13T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 284508177 | BI 220707"), //
+                        hasAmount("MXN", 1193.99), hasGrossValue("MXN", 1193.99), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-14T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 284508178 | BI 220707"), //
+                        hasAmount("MXN", 1193.99), hasGrossValue("MXN", 1193.99), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-14T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 285890927 | BI 220707"), //
+                        hasAmount("MXN", 1194.13), hasGrossValue("MXN", 1194.13), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-15T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 285890928 | BI 220707"), //
+                        hasAmount("MXN", 1194.13), hasGrossValue("MXN", 1194.13), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-15T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 287203876 | BI 220707"), //
+                        hasAmount("MXN", 1194.27), hasGrossValue("MXN", 1194.27), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-16T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 287203877 | BI 220707"), //
+                        hasAmount("MXN", 1194.27), hasGrossValue("MXN", 1194.27), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-16T00:00"), hasShares(11.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 288592815 | LF 240321"), //
+                        hasAmount("MXN", 1096.80), hasGrossValue("MXN", 1096.80), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-17T00:00"), hasShares(11.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 288592816 | LF 240321"), //
+                        hasAmount("MXN", 1096.80), hasGrossValue("MXN", 1096.80), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-17T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 290040065 | BI 220804"), //
+                        hasAmount("MXN", 1187.18), hasGrossValue("MXN", 1187.18), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-20T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 290040066 | BI 220804"), //
+                        hasAmount("MXN", 1187.18), hasGrossValue("MXN", 1187.19), //
+                        hasTaxes("MXN", 0.01), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-20T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 291509977 | BI 220714"), //
+                        hasAmount("MXN", 1193.87), hasGrossValue("MXN", 1193.87), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-21T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 291509978 | BI 220714"), //
+                        hasAmount("MXN", 1193.87), hasGrossValue("MXN", 1193.87), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-21T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 292936418 | BI 220707"), //
+                        hasAmount("MXN", 1195.88), hasGrossValue("MXN", 1195.88), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-22T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 292936419 | BI 220707"), //
+                        hasAmount("MXN", 1195.88), hasGrossValue("MXN", 1195.88), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-22T00:00"), hasShares(122.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 294297142 | BI 221006"), //
+                        hasAmount("MXN", 1190.88), hasGrossValue("MXN", 1190.88), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-23T00:00"), hasShares(122.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 294297143 | BI 221006"), //
+                        hasAmount("MXN", 1190.88), hasGrossValue("MXN", 1190.88), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-23T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 295442393 | BI 220714"), //
+                        hasAmount("MXN", 1194.60), hasGrossValue("MXN", 1194.60), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-24T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 295442394 | BI 220714"), //
+                        hasAmount("MXN", 1194.60), hasGrossValue("MXN", 1194.60), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-24T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 297038762 | BI 220714"), //
+                        hasAmount("MXN", 1194.74), hasGrossValue("MXN", 1194.74), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check dividend transaction
+        assertThat(results, hasItem(dividend( //
+                        hasDate("2022-06-27T00:00"), hasExDate(null), //
+                        hasShares(0.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 93960162"), //
+                        hasAmount("MXN", 19.10), hasGrossValue("MXN", 21.22), //
+                        hasTaxes("MXN", 2.12), hasFees("MXN", 0.00))));
+
+        // check dividend transaction
+        assertThat(results, hasItem(dividend( //
+                        hasDate("2022-06-27T00:00"), hasExDate(null), //
+                        hasShares(0.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 94044647"), //
+                        hasAmount("MXN", 99.25), hasGrossValue("MXN", 110.28), //
+                        hasTaxes("MXN", 11.03), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-27T00:00"), hasShares(120.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 297038763 | BI 220714"), //
+                        hasAmount("MXN", 1194.74), hasGrossValue("MXN", 1194.75), //
+                        hasTaxes("MXN", 0.01), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-27T00:00"), hasShares(131.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 298412438 | BI 220714"), //
+                        hasAmount("MXN", 1305.25), hasGrossValue("MXN", 1305.25), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-28T00:00"), hasShares(131.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 298412439 | BI 220714"), //
+                        hasAmount("MXN", 1305.25), hasGrossValue("MXN", 1305.25), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-28T00:00"), hasShares(131.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 299883038 | BI 220714"), //
+                        hasAmount("MXN", 1305.53), hasGrossValue("MXN", 1305.53), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-29T00:00"), hasShares(131.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 299883039 | BI 220714"), //
+                        hasAmount("MXN", 1305.53), hasGrossValue("MXN", 1305.53), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-29T00:00"), hasShares(134.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 301274500 | BI 221006"), //
+                        hasAmount("MXN", 1309.63), hasGrossValue("MXN", 1309.63), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(sale( //
+                        hasDate("2022-06-30T00:00"), hasShares(134.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 301274501 | BI 221006"), //
+                        hasAmount("MXN", 1309.63), hasGrossValue("MXN", 1309.63), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+
+        // check buy sell transaction
+        assertThat(results, hasItem(purchase( //
+                        hasDate("2022-06-30T00:00"), hasShares(13.00), //
+                        hasSource("EstadoDeCuenta07.txt"), //
+                        hasNote("Folio: 302677408 | LF 231130"), //
+                        hasAmount("MXN", 1301.18), hasGrossValue("MXN", 1301.18), //
+                        hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
+    }
 }

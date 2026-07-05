@@ -184,9 +184,12 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         var firstRelevantLine = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ " //
                         + "(Abono efectivo Resultado Fiscal Distribuido" //
+                        + "|Abono efectivo Resultado Fiscal" //
                         + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
-                        + "|ABONO DIVIDENDO EMISORA EXTRANJERA) .*$");
+                        + "|ABONO DIVIDENDO EMISORA EXTRANJERA" //
+                        + "|ABONO DIVIDENDO EMISORA" //
+                        + "|AEXBTORNAON DJEIVRIADENDO EMISORA) .*$");
         type.addBlock(firstRelevantLine);
         firstRelevantLine.set(pdfTransaction);
 
@@ -199,14 +202,20 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         // 06/10 1689408 Abono Reembolso de Capital, Cust. Normal FUNO 11 0 0.000000 0.00 0.00 0.00 24.63 98.96
                         // 23/24 30895065 ABONO DIVIDENDO EMISORA EXTRANJERA VWO * 0 0.000000 0.00 0.00 0.00 19.77 24.52
                         //  27/29 3978837 ADbisotnriob eufiedcotivo Resultado Fiscal FIBRAPL 14 0 0.000000 0.00 0.00 0.00 128.93 131.44
+                        //  24/27 93960162 AEXBTORNAON DJEIVRIADENDO EMISORA VWO * 0 0.000000 0.00 0.00 0.00 21.22 22.88
+                        //  04/04 116587291 ABONO DIVIDENDO EMISORA VOO * 0 0.000000 0.00 0.00 0.00 82.02 82.13
+                        // EXTRANJERA
                         // @formatter:on
                         .section("date", "note", "type", "name", "serie", "amount") //
                         .documentContext("month", "year") //
                         .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
                                         + "(?<type>Abono efectivo Resultado Fiscal Distribuido" //
+                                        + "|Abono efectivo Resultado Fiscal" //
                                         + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
-                                        + "|ABONO DIVIDENDO EMISORA EXTRANJERA) " //
+                                        + "|ABONO DIVIDENDO EMISORA EXTRANJERA" //
+                                        + "|ABONO DIVIDENDO EMISORA" //
+                                        + "|AEXBTORNAON DJEIVRIADENDO EMISORA) " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
                                         + "(?<amount>[\\.,\\d]+) [\\.,\\d]+$") //
@@ -318,12 +327,23 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
         // @formatter:off
         // "ADbisotnriob eufiedcotivo Resultado Fiscal" is "Abono efectivo Resultado Fiscal
         // Distribuido" with the overlapping description columns interleaved by the text extraction.
+        // "Abono efectivo Resultado Fiscal" is the same description with the trailing
+        // "Distribuido" wrapped onto the next line.
         // @formatter:on
         if ("Abono efectivo Resultado Fiscal Distribuido".equals(dividendType)
+                        || "Abono efectivo Resultado Fiscal".equals(dividendType)
                         || "ADbisotnriob eufiedcotivo Resultado Fiscal".equals(dividendType))
             return "RETENCION ISR POR RESULTADO FISCAL";
 
-        if ("ABONO DIVIDENDO EMISORA EXTRANJERA".equals(dividendType))
+        // @formatter:off
+        // "AEXBTORNAON DJEIVRIADENDO EMISORA" is "ABONO DIVIDENDO EMISORA EXTRANJERA"
+        // with the overlapping description columns interleaved by the text extraction.
+        // "ABONO DIVIDENDO EMISORA" is the same description with the trailing
+        // "EXTRANJERA" wrapped onto the next line.
+        // @formatter:on
+        if ("ABONO DIVIDENDO EMISORA EXTRANJERA".equals(dividendType)
+                        || "ABONO DIVIDENDO EMISORA".equals(dividendType)
+                        || "AEXBTORNAON DJEIVRIADENDO EMISORA".equals(dividendType))
             return "ISR 10 % POR DIVIDENDOS SIC";
 
         return null;
