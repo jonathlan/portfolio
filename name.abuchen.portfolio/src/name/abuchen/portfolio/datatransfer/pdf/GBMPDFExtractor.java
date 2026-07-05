@@ -52,6 +52,11 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           Tax withholding rows (RETENCION ISR POR RESULTADO FISCAL, ISR 10 % POR DIVIDENDOS SIC)
  *           are collected upfront and merged into the matching dividend transaction.
  *
+ *           Since 2022 the statement uses a slightly different layout: transaction rows start
+ *           with a leading space, the statement period is printed behind the RFC on the same
+ *           line, and the text extraction can interleave overlapping description columns
+ *           (e.g. "Abono efectivo" and "Distribuido" become "ADbisotnriob eufiedcotivo").
+ *
  * @formatter:on
  */
 @SuppressWarnings("nls")
@@ -83,7 +88,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         var pdfTransaction = new Transaction<BuySellEntry>();
 
-        var firstRelevantLine = new Block("^[\\d]{2}\\/[\\d]{2} [\\d]+ Compra Soc\\. de Inv\\. \\- Cliente .*$");
+        var firstRelevantLine = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ Compra Soc\\. de Inv\\. \\- Cliente .*$");
         type.addBlock(firstRelevantLine);
         firstRelevantLine.set(pdfTransaction);
 
@@ -96,7 +101,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         // @formatter:on
                         .section("date", "note", "name", "serie", "shares", "amount") //
                         .documentContext("month", "year") //
-                        .match("^[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
                                         + "Compra Soc\\. de Inv\\. \\- Cliente " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
@@ -118,7 +123,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         var reportoTransaction = new Transaction<BuySellEntry>();
 
-        var reportoBlock = new Block("^[\\d]{2}\\/[\\d]{2} [\\d]+ (Compra en Reporto|Vencimiento de Reporto) .*$");
+        var reportoBlock = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ (Compra en Reporto|Vencimiento de Reporto) .*$");
         type.addBlock(reportoBlock);
         reportoBlock.set(reportoTransaction);
 
@@ -130,10 +135,11 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         // 04/04 90565309 Compra en Reporto LD 260806 1 99.412030 1.00 1 0.00 0.00 0.00 99.41 61.25
                         // 05/05 90565310 Vencimiento de Reporto LD 260806 1 99.414800 1.00 1 0.00 0.00 0.00 99.41 160.66
                         // 11/11 93153110 Vencimiento de Reporto BI 211104 16 9.964150 1.00 3 0.00 0.01 0.01 159.41 160.66
+                        //  29/29 241220673 Compra en Reporto BI 220630 107 9.872545 0.10 3 0.00 0.00 0.00 1,056.36 3.62
                         // @formatter:on
                         .section("date", "note", "type", "name", "serie", "shares", "tax", "amount") //
                         .documentContext("month", "year") //
-                        .match("^[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
                                         + "(?<type>Compra en Reporto|Vencimiento de Reporto) " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
@@ -176,8 +182,9 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         var pdfTransaction = new Transaction<AccountTransaction>();
 
-        var firstRelevantLine = new Block("^[\\d]{2}\\/[\\d]{2} [\\d]+ " //
+        var firstRelevantLine = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ " //
                         + "(Abono efectivo Resultado Fiscal Distribuido" //
+                        + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
                         + "|ABONO DIVIDENDO EMISORA EXTRANJERA) .*$");
         type.addBlock(firstRelevantLine);
@@ -191,11 +198,13 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         // 06/10 1671315 Abono efectivo Resultado Fiscal Distribuido FUNO 11 0 0.000000 0.00 0.00 0.00 47.61 74.33
                         // 06/10 1689408 Abono Reembolso de Capital, Cust. Normal FUNO 11 0 0.000000 0.00 0.00 0.00 24.63 98.96
                         // 23/24 30895065 ABONO DIVIDENDO EMISORA EXTRANJERA VWO * 0 0.000000 0.00 0.00 0.00 19.77 24.52
+                        //  27/29 3978837 ADbisotnriob eufiedcotivo Resultado Fiscal FIBRAPL 14 0 0.000000 0.00 0.00 0.00 128.93 131.44
                         // @formatter:on
                         .section("date", "note", "type", "name", "serie", "amount") //
                         .documentContext("month", "year") //
-                        .match("^[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
                                         + "(?<type>Abono efectivo Resultado Fiscal Distribuido" //
+                                        + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
                                         + "|ABONO DIVIDENDO EMISORA EXTRANJERA) " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
@@ -243,14 +252,16 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
     {
         // @formatter:off
         // DEL 1 AL 31 DE MAYO DE 2021
+        // RFC:XXXXXXXXXXXXXX DEL 1 AL 30 DE ABRIL DE 2022
         // @formatter:on
-        var pPeriod = Pattern.compile("^DEL [\\d]{1,2} AL [\\d]{1,2} DE (?<month>[A-Z]+) DE (?<year>[\\d]{4}).*$");
+        var pPeriod = Pattern.compile("^.*DEL [\\d]{1,2} AL [\\d]{1,2} DE (?<month>[A-Z]+) DE (?<year>[\\d]{4}).*$");
 
         // @formatter:off
         // 06/10 26674354 RETENCION ISR POR RESULTADO FISCAL FUNO 11 0 0.000000 0.00 0.00 0.00 14.28 84.67
         // 23/24 30895067 ISR 10 % POR DIVIDENDOS SIC VWO * 0 0.000000 0.00 0.00 0.00 1.98 22.55
+        //  27/29 81561904 RETENCION ISR POR RESULTADO FISCAL FIBRAPL 14 0 0.000000 0.00 0.00 0.00 38.68 92.76
         // @formatter:on
-        var pTaxAmountTransaction = Pattern.compile("^[\\d]{2}\\/(?<date>[\\d]{2}) [\\d]+ " //
+        var pTaxAmountTransaction = Pattern.compile("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) [\\d]+ " //
                         + "(?<type>RETENCION ISR POR RESULTADO FISCAL|ISR 10 % POR DIVIDENDOS SIC) " //
                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                         + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
@@ -304,7 +315,12 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
     private static String getTaxType(String dividendType)
     {
-        if ("Abono efectivo Resultado Fiscal Distribuido".equals(dividendType))
+        // @formatter:off
+        // "ADbisotnriob eufiedcotivo Resultado Fiscal" is "Abono efectivo Resultado Fiscal
+        // Distribuido" with the overlapping description columns interleaved by the text extraction.
+        // @formatter:on
+        if ("Abono efectivo Resultado Fiscal Distribuido".equals(dividendType)
+                        || "ADbisotnriob eufiedcotivo Resultado Fiscal".equals(dividendType))
             return "RETENCION ISR POR RESULTADO FISCAL";
 
         if ("ABONO DIVIDENDO EMISORA EXTRANJERA".equals(dividendType))
