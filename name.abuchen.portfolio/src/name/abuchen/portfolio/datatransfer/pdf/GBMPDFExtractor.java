@@ -50,6 +50,9 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           (maturity date, e.g. "211104") changes with every roll-over and is therefore
  *           not part of the security, but kept in the note.
  *
+ *           Cash rows (DEPOSITO DE EFECTIVO, INTERESES) use "Efec *" as EMISORA and are
+ *           imported as deposit and interest transactions without a security.
+ *
  *           Tax withholding rows (RETENCION ISR POR RESULTADO FISCAL, ISR 10 % POR DIVIDENDOS SIC)
  *           are collected upfront and merged into the matching dividend transaction.
  *
@@ -80,6 +83,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         addBuySellTransaction();
         addDividendTransaction();
+        addDepositAndInterestTransaction();
     }
 
     @Override
@@ -312,6 +316,43 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .wrap(TransactionItem::new);
+    }
+
+    private void addDepositAndInterestTransaction()
+    {
+        final var type = new DocumentType("DESGLOSE DE MOVIMIENTOS", this::parseDocumentContext);
+        this.addDocumentTyp(type);
+
+        var depositInterestBlock = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ (DEPOSITO DE EFECTIVO|INTERESES) Efec \\* .*$");
+        type.addBlock(depositInterestBlock);
+        depositInterestBlock.set(new Transaction<AccountTransaction>()
+
+                        .subject(() -> new AccountTransaction(AccountTransaction.Type.DEPOSIT))
+
+                        // @formatter:off
+                        //  05/05 209452300 DEPOSITO DE EFECTIVO Efec * 0 0.000000 0.00 0.00 0.00 1,129.94 1,138.91
+                        //  29/29 218952286 INTERESES Efec * 0 0.000000 0.00 0.00 0.00 0.05 20.40
+                        // @formatter:on
+                        .section("date", "note", "type", "amount") //
+                        .documentContext("month", "year") //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                                        + "(?<type>DEPOSITO DE EFECTIVO|INTERESES) Efec \\* " //
+                                        + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
+                                        + "(?<amount>[\\.,\\d]+) (\\-)?[\\.,\\d]+$") //
+                        .assign((t, v) -> {
+                            // @formatter:off
+                            // Is type --> "INTERESES" change from DEPOSIT to INTEREST
+                            // @formatter:on
+                            if ("INTERESES".equals(v.get("type")))
+                                t.setType(AccountTransaction.Type.INTEREST);
+
+                            t.setDateTime(asDate(v.get("date") + " " + v.get("month") + " " + v.get("year"), AdditionalLocales.MEXICO));
+                            t.setCurrencyCode(asCurrencyCode(MXN));
+                            t.setAmount(asAmount(v.get("amount")));
+                            t.setNote("Folio: " + v.get("note"));
+                        })
+
+                        .wrap(TransactionItem::new));
     }
 
     private void parseDocumentContext(DocumentContext context, String[] lines)
