@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import name.abuchen.portfolio.Messages;
 import name.abuchen.portfolio.datatransfer.DocumentContext;
 import name.abuchen.portfolio.datatransfer.ExtractorUtils;
 import name.abuchen.portfolio.datatransfer.pdf.PDFParser.Block;
@@ -56,6 +57,12 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           with a leading space, the statement period is printed behind the RFC on the same
  *           line, and the text extraction can interleave overlapping description columns
  *           (e.g. "Abono efectivo" and "Distribuido" become "ADbisotnriob eufiedcotivo").
+ *           Long descriptions can also wrap, so a row may end before the last word of the
+ *           description, and the SALDO column can be negative.
+ *
+ *           Dividend cancellation rows (Cancelación abono Resultado fiscal) reverse a
+ *           previously booked dividend. They are reported as unsupported cancellations;
+ *           the matching withholding refund row (ABONO ISR POR RESULTADO FISCAL) is ignored.
  *
  * @formatter:on
  */
@@ -105,7 +112,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                                         + "Compra Soc\\. de Inv\\. \\- Cliente " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
-                                        + "(?<amount>[\\.,\\d]+) [\\.,\\d]+$") //
+                                        + "(?<amount>[\\.,\\d]+) (\\-)?[\\.,\\d]+$") //
                         .assign((t, v) -> {
                             v.put("currency", asCurrencyCode(MXN));
                             v.put("tickerSymbol", getSecurityTickerSymbol(v.get("name"), v.get("serie")));
@@ -143,7 +150,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                                         + "(?<type>Compra en Reporto|Vencimiento de Reporto) " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
-                                        + "(?<tax>[\\.,\\d]+) (?<amount>[\\.,\\d]+) [\\.,\\d]+$") //
+                                        + "(?<tax>[\\.,\\d]+) (?<amount>[\\.,\\d]+) (\\-)?[\\.,\\d]+$") //
                         .assign((t, v) -> {
                             // @formatter:off
                             // Is type --> "Vencimiento de Reporto" change from BUY to SELL
@@ -185,8 +192,10 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
         var firstRelevantLine = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ " //
                         + "(Abono efectivo Resultado Fiscal Distribuido" //
                         + "|Abono efectivo Resultado Fiscal" //
+                        + "|ADbisotnriob eufiedcotivo Resultado Fiscal NO" //
                         + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
+                        + "|ANboormnoa lReembolso de Capital,  Cust\\." //
                         + "|ABONO DIVIDENDO EMISORA EXTRANJERA" //
                         + "|ABONO DIVIDENDO EMISORA" //
                         + "|AEXBTORNAON DJEIVRIADENDO EMISORA) .*$");
@@ -205,20 +214,26 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         //  24/27 93960162 AEXBTORNAON DJEIVRIADENDO EMISORA VWO * 0 0.000000 0.00 0.00 0.00 21.22 22.88
                         //  04/04 116587291 ABONO DIVIDENDO EMISORA VOO * 0 0.000000 0.00 0.00 0.00 82.02 82.13
                         // EXTRANJERA
+                        //  08/10 7416560 ANboormnoa lReembolso de Capital,  Cust. TERRA 13 0 0.000000 0.00 0.00 0.00 9.04 198.65
+                        //  31/31 8342471 Abono efectivo Resultado Fiscal FUNO 11 0 0.000000 0.00 0.00 0.00 63.62 -17.47
+                        // Distribuido
+                        //  31/31 8383204 ADbisotnriob eufiedcotivo Resultado Fiscal NO FUNO 11 0 0.000000 0.00 0.00 0.00 21.99 4.52
                         // @formatter:on
                         .section("date", "note", "type", "name", "serie", "amount") //
                         .documentContext("month", "year") //
                         .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
                                         + "(?<type>Abono efectivo Resultado Fiscal Distribuido" //
                                         + "|Abono efectivo Resultado Fiscal" //
+                                        + "|ADbisotnriob eufiedcotivo Resultado Fiscal NO" //
                                         + "|ADbisotnriob eufiedcotivo Resultado Fiscal" //
                                         + "|Abono Reembolso de Capital, Cust\\. Normal" //
+                                        + "|ANboormnoa lReembolso de Capital,  Cust\\." //
                                         + "|ABONO DIVIDENDO EMISORA EXTRANJERA" //
                                         + "|ABONO DIVIDENDO EMISORA" //
                                         + "|AEXBTORNAON DJEIVRIADENDO EMISORA) " //
                                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                                         + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
-                                        + "(?<amount>[\\.,\\d]+) [\\.,\\d]+$") //
+                                        + "(?<amount>[\\.,\\d]+) (\\-)?[\\.,\\d]+$") //
                         .assign((t, v) -> {
                             var context = type.getCurrentContext();
                             var security = v.get("name") + " " + v.get("serie");
@@ -255,6 +270,48 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .wrap(TransactionItem::new);
+
+        var cancellationTransaction = new Transaction<AccountTransaction>();
+
+        var cancellationBlock = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ Cdiasntrcieblauciid.on abono Resultado fiscal .*$");
+        type.addBlock(cancellationBlock);
+        cancellationBlock.set(cancellationTransaction);
+
+        cancellationTransaction //
+
+                        .subject(() -> new AccountTransaction(AccountTransaction.Type.DIVIDENDS))
+
+                        // @formatter:off
+                        // "Cdiasntrcieblauciidóon abono Resultado fiscal" is "Cancelación abono Resultado fiscal"
+                        // with the overlapping "distribuido" column interleaved by the text extraction.
+                        // It reverses a previously booked dividend and is followed by a matching
+                        // "ABONO ISR POR RESULTADO FISCAL DIST." row refunding the withholding.
+                        // Both rows are not imported; the cancellation is reported as unsupported.
+                        //
+                        //  31/31 8293631 Cdiasntrcieblauciidóon abono Resultado fiscal FUNO 11 0 0.000000 0.00 0.00 0.00 85.61 -81.09
+                        // @formatter:on
+                        .section("date", "note", "name", "serie", "amount") //
+                        .documentContext("month", "year") //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                                        + "Cdiasntrcieblauciid.on abono Resultado fiscal " //
+                                        + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
+                                        + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
+                                        + "(?<amount>[\\.,\\d]+) (\\-)?[\\.,\\d]+$") //
+                        .assign((t, v) -> {
+                            v.put("currency", asCurrencyCode(MXN));
+                            v.put("tickerSymbol", getSecurityTickerSymbol(v.get("name"), v.get("serie")));
+                            v.put("name", getSecurityName(v.get("name"), v.get("serie")));
+                            t.setSecurity(getOrCreateSecurity(v));
+
+                            t.setDateTime(asDate(v.get("date") + " " + v.get("month") + " " + v.get("year"), AdditionalLocales.MEXICO));
+                            t.setCurrencyCode(asCurrencyCode(MXN));
+                            t.setAmount(asAmount(v.get("amount")));
+                            t.setNote("Folio: " + v.get("note"));
+
+                            v.markAsFailure(Messages.MsgErrorTransactionOrderCancellationUnsupported);
+                        })
+
+                        .wrap(TransactionItem::new);
     }
 
     private void parseDocumentContext(DocumentContext context, String[] lines)
@@ -269,12 +326,15 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
         // 06/10 26674354 RETENCION ISR POR RESULTADO FISCAL FUNO 11 0 0.000000 0.00 0.00 0.00 14.28 84.67
         // 23/24 30895067 ISR 10 % POR DIVIDENDOS SIC VWO * 0 0.000000 0.00 0.00 0.00 1.98 22.55
         //  27/29 81561904 RETENCION ISR POR RESULTADO FISCAL FIBRAPL 14 0 0.000000 0.00 0.00 0.00 38.68 92.76
+        //  08/10 152765619 RDEISTTE.NCION ISR POR RESULTADO FISCAL TERRA 13 0 0.000000 0.00 0.00 0.00 17.73 184.95
         // @formatter:on
         var pTaxAmountTransaction = Pattern.compile("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) [\\d]+ " //
-                        + "(?<type>RETENCION ISR POR RESULTADO FISCAL|ISR 10 % POR DIVIDENDOS SIC) " //
+                        + "(?<type>RETENCION ISR POR RESULTADO FISCAL" //
+                        + "|RDEISTTE\\.NCION ISR POR RESULTADO FISCAL" //
+                        + "|ISR 10 % POR DIVIDENDOS SIC) " //
                         + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
                         + "[\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
-                        + "(?<tax>[\\.,\\d]+) [\\.,\\d]+$");
+                        + "(?<tax>[\\.,\\d]+) (\\-)?[\\.,\\d]+$");
 
         var taxAmountTransactionHelper = new TaxAmountTransactionHelper();
         context.putType(taxAmountTransactionHelper);
@@ -291,10 +351,18 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
             var m = pTaxAmountTransaction.matcher(lines[i]);
             if (m.matches() && context.containsKey("month"))
             {
+                // @formatter:off
+                // "RDEISTTE.NCION ISR POR RESULTADO FISCAL" is "RETENCION ISR POR RESULTADO FISCAL"
+                // with the wrapped "DIST." of the description column interleaved by the text extraction.
+                // @formatter:on
+                var taxType = m.group("type");
+                if ("RDEISTTE.NCION ISR POR RESULTADO FISCAL".equals(taxType))
+                    taxType = "RETENCION ISR POR RESULTADO FISCAL";
+
                 var item = new TaxAmountTransactionItem();
                 item.line = i + 1;
                 item.dateTime = asDate(m.group("date") + " " + context.get("month") + " " + context.get("year"), AdditionalLocales.MEXICO);
-                item.type = m.group("type");
+                item.type = taxType;
                 item.security = m.group("name") + " " + m.group("serie");
                 item.tax = asAmount(m.group("tax"));
                 item.currency = asCurrencyCode(MXN);
@@ -329,10 +397,13 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
         // Distribuido" with the overlapping description columns interleaved by the text extraction.
         // "Abono efectivo Resultado Fiscal" is the same description with the trailing
         // "Distribuido" wrapped onto the next line.
+        // "ADbisotnriob eufiedcotivo Resultado Fiscal NO" is the interleaved variant of
+        // "Abono efectivo Resultado Fiscal NO Distribuido".
         // @formatter:on
         if ("Abono efectivo Resultado Fiscal Distribuido".equals(dividendType)
                         || "Abono efectivo Resultado Fiscal".equals(dividendType)
-                        || "ADbisotnriob eufiedcotivo Resultado Fiscal".equals(dividendType))
+                        || "ADbisotnriob eufiedcotivo Resultado Fiscal".equals(dividendType)
+                        || "ADbisotnriob eufiedcotivo Resultado Fiscal NO".equals(dividendType))
             return "RETENCION ISR POR RESULTADO FISCAL";
 
         // @formatter:off
@@ -355,13 +426,22 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
 
         public Optional<TaxAmountTransactionItem> findItem(int line, LocalDateTime dateTime, String security, String type)
         {
-            for (TaxAmountTransactionItem item : items)
+            for (var iterator = items.iterator(); iterator.hasNext();)
             {
+                var item = iterator.next();
+
                 if (item.line < line)
                     continue;
 
                 if (item.dateTime.equals(dateTime) && item.security.equals(security) && item.type.equals(type))
+                {
+                    // @formatter:off
+                    // A withholding row belongs to exactly one dividend row. Remove the item
+                    // so it is not merged into a second dividend of the same security and day.
+                    // @formatter:on
+                    iterator.remove();
                     return Optional.of(item);
+                }
             }
             return Optional.empty();
         }
