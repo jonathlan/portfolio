@@ -1892,4 +1892,57 @@ public class GBMPDFExtractorTest
                         hasAmount("MXN", 4381.92), hasGrossValue("MXN", 4381.92), //
                         hasTaxes("MXN", 0.00), hasFees("MXN", 0.00))));
     }
+
+    @Test
+    public void testEstadoDeCuenta09()
+    {
+        var extractor = new GBMPDFExtractor(new Client());
+
+        List<Exception> errors = new ArrayList<>();
+
+        var results = extractor.extract(PDFInputFile.loadTestCase(getClass(), "EstadoDeCuenta09.txt"), errors);
+
+        assertThat(errors, empty());
+        assertThat(countSecurities(results), is(4L));
+        assertThat(countBuySell(results), is(40L));
+        assertThat(countAccountTransactions(results), is(2L));
+        assertThat(countAccountTransfers(results), is(0L));
+        assertThat(countItemsWithFailureMessage(results), is(0L));
+        assertThat(countSkippedItems(results), is(0L));
+        assertThat(results.size(), is(46));
+        new AssertImportActions().check(results, "MXN");
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("FIBRAPL14"), //
+                        hasName("FIBRAPL 14"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("FUNO11"), //
+                        hasName("FUNO 11"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("LF"), //
+                        hasName("LF"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check security
+        assertThat(results, hasItem(security( //
+                        hasIsin(null), hasWkn(null), hasTicker("LD"), //
+                        hasName("LD"), //
+                        hasCurrencyCode("MXN"))));
+
+        // check dividend transaction
+        assertThat(results, hasItem(dividend( //
+                        hasDate("2024-02-09T00:00"), hasExDate(null), //
+                        hasShares(0.00), //
+                        hasSource("EstadoDeCuenta09.txt"), //
+                        hasNote("Folio: 10804616"), //
+                        hasAmount("MXN", 93.29), hasGrossValue("MXN", 133.27), //
+                        hasTaxes("MXN", 39.98), hasFees("MXN", 0.00))));
+    }
 }

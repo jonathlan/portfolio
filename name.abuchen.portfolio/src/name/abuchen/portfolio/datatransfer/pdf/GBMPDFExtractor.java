@@ -53,6 +53,10 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           Cash rows (DEPOSITO DE EFECTIVO, INTERESES) use "Efec *" as EMISORA and are
  *           imported as deposit and interest transactions without a security.
  *
+ *           CBFI share distributions (Distribución de CBFIs por Resultado Fiscal) are imported
+ *           as delivery inbound transactions. The description may be garbled as
+ *           "DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal" due to overlapping columns.
+ *
  *           Tax withholding rows (RETENCION ISR POR RESULTADO FISCAL, ISR 10 % POR DIVIDENDOS SIC)
  *           are collected upfront and merged into the matching dividend transaction.
  *
@@ -66,6 +70,11 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           Dividend cancellation rows (Cancelación abono Resultado fiscal) reverse a
  *           previously booked dividend. They are reported as unsupported cancellations;
  *           the matching withholding refund row (ABONO ISR POR RESULTADO FISCAL) is ignored.
+ *
+ *           CBFI (Certificado Bursátil Fiduciario Inmobiliario) distributions may have
+ *           garbled descriptions like "DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal"
+ *           due to overlapping columns in the PDF text extraction. These are handled as
+ *           regular dividend transactions with potential tax withholding merging.
  *
  * @formatter:on
  */
@@ -84,6 +93,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
         addBuySellTransaction();
         addDividendTransaction();
         addDepositAndInterestTransaction();
+        addDeliveryTransaction();
     }
 
     @Override
@@ -353,6 +363,48 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                         })
 
                         .wrap(TransactionItem::new));
+    }
+
+    private void addDeliveryTransaction()
+    {
+        final var type = new DocumentType("DESGLOSE DE MOVIMIENTOS", this::parseDocumentContext);
+        this.addDocumentTyp(type);
+
+        var deliveryBlock = new Block("^[\\s]*[\\d]{2}\\/[\\d]{2} [\\d]+ DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal .*$");
+        type.addBlock(deliveryBlock);
+        deliveryBlock.set(new Transaction<PortfolioTransaction>()
+
+                        .subject(() -> new PortfolioTransaction(PortfolioTransaction.Type.DELIVERY_INBOUND))
+
+                        // @formatter:off
+                        //  01/01 10799687 DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal FIBRAPL 14 4 0.000000 0.00 0.00 0.00 0.00 99.32
+                        // @formatter:on
+                        .section("date", "note", "name", "serie", "shares") //
+                        .documentContext("month", "year") //
+                        .match("^[\\s]*[\\d]{2}\\/(?<date>[\\d]{2}) (?<note>[\\d]+) " //
+                                        + "DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal " //
+                                        + "(?<name>[A-Z0-9]+) (?<serie>[A-Z0-9\\*]+) " //
+                                        + "(?<shares>[\\.,\\d]+) [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ [\\.,\\d]+ " //
+                                        + "[\\.,\\d]+ (\\-)?[\\.,\\d]+$") //
+                        .assign((t, v) -> {
+                            v.put("currency", asCurrencyCode(MXN));
+                            v.put("tickerSymbol", getSecurityTickerSymbol(v.get("name"), v.get("serie")));
+                            v.put("name", getSecurityName(v.get("name"), v.get("serie")));
+                            t.setSecurity(getOrCreateSecurity(v));
+
+                            t.setDateTime(asDate(v.get("date") + " " + v.get("month") + " " + v.get("year"), AdditionalLocales.MEXICO));
+                            t.setShares(asShares(v.get("shares")));
+                            t.setCurrencyCode(asCurrencyCode(MXN));
+                            t.setAmount(0L);
+                            t.setNote("Folio: " + v.get("note"));
+                        })
+
+                        .wrap(t -> {
+                            if (t.getCurrencyCode() != null && t.getShares() == 0)
+                                return new SkippedItem(new TransactionItem(t), Messages.MsgErrorTransactionTypeNotSupportedOrRequired);
+
+                            return new TransactionItem(t);
+                        }));
     }
 
     private void parseDocumentContext(DocumentContext context, String[] lines)
