@@ -448,7 +448,7 @@ public class GBMPDFExtractor extends AbstractPDFExtractor
                     taxType = "RETENCION ISR POR RESULTADO FISCAL";
 
                 var item = new TaxAmountTransactionItem();
-                item.line = i + 1;
+                item.line = i;
                 item.dateTime = asDate(m.group("date") + " " + context.get("month") + " " + context.get("year"), AdditionalLocales.MEXICO);
                 item.type = taxType;
                 item.security = m.group("name") + " " + m.group("serie");
