@@ -71,11 +71,6 @@ import name.abuchen.portfolio.util.AdditionalLocales;
  *           previously booked dividend. They are reported as unsupported cancellations;
  *           the matching withholding refund row (ABONO ISR POR RESULTADO FISCAL) is ignored.
  *
- *           CBFI (Certificado Bursátil Fiduciario Inmobiliario) distributions may have
- *           garbled descriptions like "DDeisptorsibituoi ddoe CBFIs por Resultado Fiscal"
- *           due to overlapping columns in the PDF text extraction. These are handled as
- *           regular dividend transactions with potential tax withholding merging.
- *
  * @formatter:on
  */
 @SuppressWarnings("nls")
