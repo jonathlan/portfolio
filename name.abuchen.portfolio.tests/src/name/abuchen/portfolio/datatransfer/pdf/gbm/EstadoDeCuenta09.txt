@@ -257,7 +257,7 @@ del Sistema de Pagos Electrónicos Interbancario (SPEI). Sólo deberá de instru
 Estandarizada (CLABE) asignada exclusivamente a su Contrato, la institución receptora Casa de Bolsa y el nombre del titular del contrato de
 Intermediación Bursátil. Le recordamos que las inversiones en acciones de los fondos de inversión no garantizan rendimientos futuros, ni sus sociedades
 operadoras son responsables de las pérdidas que el inversionista pueda sufrir como consecuencia de dichas inversiones o asumen
-        Institución: GBM           CLABE:  601180400002684217 el riesgo de las variaciones en el diferencial del precio a favor de los clientes.
+        Institución: GBM           CLABE:  XXXXXXXX el riesgo de las variaciones en el diferencial del precio a favor de los clientes.
 Si alguno de nuestros asesores te solicita que realices depósitos o transferencias a una cuenta diferente, no lo hagas y denuncia este hecho en
 gbmtransparente@gbm.com.mx DATOS REFERENCIADOS:
 *INFORMACION SOBRE FONDOS DE INVERSION: 1.  En caso de que existan valores bajo la garantía llamada Prenda Bursátil con Transmisión de Propiedad , este valor será

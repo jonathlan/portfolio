@@ -245,7 +245,7 @@ Le recordamos que para su seguridad y comodidad tenemos la opción de recibir su
 del Sistema de Pagos Electrónicos Interbancario (SPEI). Sólo deberá de instruir al emisor del pago: el número de cuenta Clave Bancaria
 Estandarizada (CLABE) asignada exclusivamente a su Contrato, la institución receptora Casa de Bolsa y el nombre del titular del contrato de PRIVACIDAD:
 Intermediación Bursátil. De conformidad a lo estipulado en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares y como parte
-        Institución: GBM           CLABE:  601180400002684217 del compromiso de GBM por preservar la privacidad de la información, hacemos de su conocimiento que el aviso de privacidad
+        Institución: GBM           CLABE:  XXXXXXXX del compromiso de GBM por preservar la privacidad de la información, hacemos de su conocimiento que el aviso de privacidad
 respectivo mediante el cual, entre otros puntos, se informa la finalidad del tratamiento de sus datos, se encontrará publicado en
 Si alguno de nuestros asesores te solicita que realices depósitos o transferencias a una cuenta diferente, no lo hagas y denuncia este hecho en la página web de esta Casa de Bolsa, www.gbm.com
 gbmtransparente@gbm.com.mx

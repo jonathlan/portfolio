@@ -231,7 +231,7 @@ Contrato, la institución receptora Casa de Bolsa y el nombre del titular del co
 Los datos necesarios para hacer la transacción son los siguientes: De conformidad a lo estipulado en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares y
 como parte del compromiso de GBM por preservar la privacidad de la información, hacemos de su conocimiento que el
 Institución: GBM aviso de privacidad respectivo mediante el cual, entre otros puntos, se informa la finalidad del tratamiento de sus datos,
-CLABE: 601180400002684217 se encontrará publicado en la página web de esta Casa de Bolsa, www.gbm.com
+CLABE: XXXXXXXX se encontrará publicado en la página web de esta Casa de Bolsa, www.gbm.com
 *INFORMACION SOBRE FONDOS DE INVERSION: NOTAS ACLARATORIAS:
 La composición de las carteras, clasificaciones y calificaciones de los fondos de inversión distribuidos por Grupo 1. La abreviación efec *. significa efectivo.
 Bursátil Mexicano, S.A. de C.V. Casa de Bolsa, se publican en la siguiente página de internet: 2. Todos los importes y cálculos están expresados en Moneda Nacional

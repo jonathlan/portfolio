@@ -188,7 +188,7 @@ contrato de Intermediación Bursátil.  compromiso de GBM por preservar la priva
  
 Institución: GBM 
  NOTAS ACLARATORIAS: 
-CLABE:  601180400002684217
+CLABE:  XXXXXXXX
  1. La abreviación efec *. significa efectivo. 
  2. Todos los importes y cálculos están expresados en Moneda Nacional 
 *INFORMACION SOBRE FONDOS DE INVERSION:  3. Si desea consultar la validez del folio de este comprobante fiscal digital por internet podrá ingresar a la página del Servicio de 
